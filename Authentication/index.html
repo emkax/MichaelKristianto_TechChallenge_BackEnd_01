@@ -1,0 +1,157 @@
+<!--
+    ============================================================
+    AUTHENTICATION TEST PAGE
+    ============================================================
+    File HTML + JS ini berfungsi untuk menguji sistem autentikasi
+    user
+
+    Alur kerja secara umum:
+
+    1. Menampilkan indikator status autentikasi:
+       - Jika token JWT dan informasi user ada di localStorage,
+         status akan menampilkan "Authenticated as <name> (<email>)"
+       - Jika tidak ada token, status menampilkan "Not authenticated".
+
+    2. Register:
+       - User mengisi form name, email, password
+       - Fungsi register() mengirim POST request ke endpoint /register
+         pada server
+       - Server merespon dengan sukses/gagal, ditampilkan lewat alert
+
+    3. Login:
+       - User memasukkan email dan password
+       - Fungsi login() mengirim POST request ke endpoint /login
+       - Jika server mengembalikan token JWT dan data user:
+         * Token dan user disimpan di localStorage
+         * Status indikator di-update menjadi "Authenticated"
+       - Jika gagal, alert menampilkan pesan error
+
+    4. Logout:
+       - Fungsi logout() menghapus token dan user dari localStorage
+       - Status indikator kembali menjadi "Not authenticated"
+
+    5. Token JWT:
+       - Digunakan untuk menandai user yang sudah berhasil autentikasi
+       - Bisa digunakan untuk mengakses endpoint yang dilindungi
+         di server (protected routes)
+
+    File ini bertanggung jawab atas:
+    - Menangani input dari user untuk register dan login
+    - Menyimpan dan mengambil token JWT dan user info dari localStorage
+    - Menampilkan status autentikasi secara real-time
+    - Mengirim request ke server dan menampilkan respons
+    ============================================================
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Auth Test Page</title>
+</head>
+<body>
+  <h1>Authentication Test Page</h1>
+
+  <!-- ================= AUTHENTICATION STATUS ================= -->
+  <div id="status" style="margin-bottom: 20px; font-weight: bold; color: red;">
+    Not authenticated
+  </div>
+
+  <!-- ================= REGISTER ================= -->
+  <h2>Register</h2>
+  <input id="register-name" placeholder="Name" />
+  <input id="register-email" placeholder="Email" />
+  <input id="register-password" type="password" placeholder="Password" />
+  <button onclick="register()">Register</button>
+
+  <!-- ================= LOGIN ================= -->
+  <h2>Login</h2>
+  <input id="login-email" placeholder="Email" />
+  <input id="login-password" type="password" placeholder="Password" />
+  <button onclick="login()">Login</button>
+
+  <!-- ================= LOGOUT ================= -->
+  <h2>Logout</h2>
+  <button onclick="logout()">Logout</button>
+
+  <script>
+    const BASE = "http://localhost:3000/authenticate";
+    let token = localStorage.getItem("token") || null;
+    let currentUser = JSON.parse(localStorage.getItem("user")) || null;
+
+    // update authentication status indicator
+    function updateStatus() {
+      const statusEl = document.getElementById("status");
+      if(token && currentUser) {
+        statusEl.textContent = `Authenticated as ${currentUser.name} (${currentUser.email})`;
+        statusEl.style.color = "green";
+      } else {
+        statusEl.textContent = "Not authenticated";
+        statusEl.style.color = "red";
+      }
+    }
+    updateStatus();
+
+    // ================= REGISTER =================
+    async function register() {
+      const body = {
+        name: document.getElementById("register-name").value,
+        email: document.getElementById("register-email").value,
+        password: document.getElementById("register-password").value
+      };
+
+      try {
+        const res = await fetch(`${BASE}/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        alert(data.message || (data.success ? "Registered successfully" : "Failed"));
+      } catch(err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    // ================= LOGIN =================
+    async function login() {
+      const body = {
+        email: document.getElementById("login-email").value,
+        password: document.getElementById("login-password").value
+      };
+
+      try {
+        const res = await fetch(`${BASE}/login`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+
+        if(data.token) {
+          token = data.token;
+          currentUser = data.user;
+          localStorage.setItem("token", token);
+          localStorage.setItem("user", JSON.stringify(currentUser));
+          updateStatus();
+          alert("Login successful");
+        } else {
+          alert(data.message || "Login failed");
+        }
+      } catch(err) {
+        alert("Error: " + err.message);
+      }
+    }
+
+    // ================= LOGOUT =================
+    function logout() {
+      token = null;
+      currentUser = null;
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      updateStatus();
+      alert("Logged out");
+    }
+  </script>
+</body>
+</html>

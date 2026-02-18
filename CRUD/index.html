@@ -1,0 +1,122 @@
+<!-- 
+    ============================================================
+    GAMBARAN UMUM
+    ============================================================
+    halaman test untuk melakukan operasi CRUD (Create, Read, 
+    Update, Delete) data Coffee ke backend server.
+
+    Alur kerja secara umum:
+    1. User mengisi form atau menekan tombol aksi.
+    2. JavaScript mengambil data dari input HTML.
+    3. Data dikirim ke backend menggunakan fetch API
+       (method: POST, GET, PUT, DELETE).
+    4. Backend memproses request sesuai endpoint.
+    5. Response dari server ditampilkan ke user
+       dalam bentuk alert atau JSON di halaman.
+    ============================================================
+-->
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Coffee Admin CRUD Simulator</title>
+</head>
+<body>
+  <h1>Coffee Admin Test Page</h1>
+
+  <h2>Create Coffee</h2>
+  <input id="create-name" placeholder="name" />
+  <input id="create-description" placeholder="description" />
+  <input id="create-price" placeholder="price (e.g. 45000.00)" />
+  <input id="create-stock" placeholder="stock" />
+  <select id="create-size">
+    <option value="SMALL">SMALL</option>
+    <option value="MEDIUM">MEDIUM</option>
+    <option value="LARGE">LARGE</option>
+  </select>
+  <button onclick="createCoffee()">Create</button>
+
+  <h2>Get All Coffee</h2>
+  <button onclick="getCoffee()">Fetch</button>
+  <pre id="list"></pre>
+
+  <h2>Update Coffee</h2>
+  <input id="update-id" placeholder="id" />
+  <input id="update-name" placeholder="new name" />
+  <input id="update-price" placeholder="new price" />
+  <select id="update-size">
+    <option value="">-- size (optional) --</option>
+    <option value="SMALL">SMALL</option>
+    <option value="MEDIUM">MEDIUM</option>
+    <option value="LARGE">LARGE</option>
+  </select>
+  <button onclick="updateCoffee()">Update</button>
+
+  <h2>Delete Coffee</h2>
+  <input id="delete-id" placeholder="id" />
+  <button onclick="deleteCoffee()">Delete</button>
+
+  <script>
+    const BASE = "http://localhost:3000/admin";
+    
+    // CALL API server /admin/addCoffee (post)
+    async function createCoffee() {
+      const body = {
+        name: document.getElementById("create-name").value,
+        description: document.getElementById("create-description").value,
+        price: document.getElementById("create-price").value,
+        stock: Number(document.getElementById("create-stock").value || 0),
+        size: document.getElementById("create-size").value
+      };
+
+      const res = await fetch(`${BASE}/addCoffee`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      alert(await res.text());
+    }
+
+    // CALL API Servr /admin/listCoffee (get)
+    async function getCoffee() {
+      const res = await fetch(`${BASE}/listCoffee`);
+      const data = await res.json();
+      document.getElementById("list").textContent = JSON.stringify(data, null, 2);
+    }
+
+
+    // CALL API server /admin/listCoffee (put)
+    async function updateCoffee() {
+      const id = document.getElementById("update-id").value;
+
+      const body = {
+        name: document.getElementById("update-name").value || undefined,
+        price: document.getElementById("update-price").value || undefined,
+        size: document.getElementById("update-size").value || undefined
+      };
+
+      const res = await fetch(`${BASE}/updateCoffee/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+
+      alert(await res.text());
+    }
+
+    // CALL API server /admin/listCoffee (delete)
+    async function deleteCoffee() {
+      const id = document.getElementById("delete-id").value;
+
+      const res = await fetch(`${BASE}/deleteCoffee/${id}`, {
+        method: "DELETE"
+      });
+
+      alert(await res.text());
+    }
+  </script>
+</body>
+</html>
